@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ankit Kumar | Creative Developer</title>
+    <!-- Tailwind for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js for 3D -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- GSAP for smooth animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700&family=Space+Grotesk:wght@300;500;700&display=swap');
+
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --accent: #ff00c8;
+            --bg: #030014;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+            cursor: none; 
+            user-select: none;
+        }
+
+        h1, h2, h3, .font-space {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #1a0033 0%, #030014 100%);
+        }
+
+        /* Custom Cursor */
+        #custom-cursor {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+            transition: transform 0.15s ease-out;
+        }
+
+        #cursor-follower {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(0, 242, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            transition: transform 0.3s ease-out;
+        }
+
+        /* Glassmorphism */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 32px;
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            transition: 0.5s;
+        }
+
+        .glass-card:hover::before {
+            left: 100%;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 242, 255, 0.1);
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-link {
+            position: relative;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            transition: 0.3s;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 5rem 2rem;
+        }
+
+        .hero-glow {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(112, 0, 255, 0.15) 0%, transparent 70%);
+            z-index: -1;
+            filter: blur(60px);
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="custom-cursor"></div>
+    <div id="cursor-follower"></div>
+    <div id="canvas-container"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 w-full z-50 p-8 flex justify-between items-center bg-transparent">
+        <div class="text-2xl font-bold tracking-tighter flex items-center gap-2">
+            <div class="w-8 h-8 bg-gradient-to-tr from-cyan-400 to-purple-600 rounded-lg"></div>
+            <span class="text-gradient font-space">Ankit.tech1</span>
+        </div>
+        <div class="hidden md:flex gap-10">
+            <a href="#home" class="nav-link">Home</a>
+            <a href="#about" class="nav-link">Skills</a>
+            <a href="#education" class="nav-link">Education</a>
+            <a href="#contact" class="nav-link">Contact</a>
+        </div>
+        <div class="flex gap-4">
+            <a href="mailto:ankitkumar2431967@gmail.com" class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-6 py-2 rounded-full font-bold hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all">
+                Hire Me
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="relative overflow-hidden">
+        <div class="hero-glow top-1/4 -left-20"></div>
+        <div class="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
+            <div class="space-y-8 z-10">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-cyan-400 font-mono text-xs uppercase tracking-widest">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                    </span>
+                    Available for projects
+                </div>
+                <h1 class="text-7xl md:text-9xl font-bold leading-tight">
+                    Ankit <br> <span class="text-gradient">Kumar</span>
+                </h1>
+                <p class="text-lg text-gray-400 max-w-lg leading-relaxed font-light">
+                    BCA student and an aspiring Full Stack Developer with a strong foundation in C, C++, and Python. Focused on building responsive web interfaces and impactful technology solutions.
+                </p>
+                <div class="flex flex-wrap gap-6 pt-4">
+                    <a href="#about" class="bg-white text-black px-10 py-5 rounded-2xl flex items-center gap-3 font-bold hover:bg-cyan-400 transition-all transform hover:-translate-y-2 shadow-xl">
+                        Explore Skills <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Arsenal -->
+    <section id="about" class="relative">
+        <div class="max-w-7xl mx-auto w-full">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
+                <div>
+                    <span class="text-cyan-400 font-mono uppercase tracking-[0.3em] text-sm">Skills & Tech</span>
+                    <h2 class="text-5xl md:text-7xl font-bold mt-4">Technical <span class="text-gradient">Arsenal</span></h2>
+                </div>
+                <p class="text-gray-400 max-w-sm text-right hidden md:block">
+                    Leveraging programming languages and cloud platforms to solve complex problems.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="glass-card p-12 group">
+                    <div class="w-16 h-16 bg-cyan-400/10 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                        <i data-lucide="code-2" class="text-cyan-400 w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-bold text-2xl mb-4">Languages</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Python, JavaScript, C, C++, HTML, CSS.</p>
+                </div>
+                
+                <div class="glass-card p-12 group">
+                    <div class="w-16 h-16 bg-purple-400/10 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                        <i data-lucide="cloud" class="text-purple-400 w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-bold text-2xl mb-4">Cloud & Tools</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">AWS Cloud, Microsoft Azure, Node.js.</p>
+                </div>
+                
+                <div class="glass-card p-12 group">
+                    <div class="w-16 h-16 bg-pink-400/10 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                        <i data-lucide="layout" class="text-pink-400 w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-bold text-2xl mb-4">Web Dev</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Specializing in Responsive Web Development and Impactful UI.</p>
+                </div>
+                
+                <div class="glass-card p-12 group">
+                    <div class="w-16 h-16 bg-yellow-400/10 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                        <i data-lucide="brain-circuit" class="text-yellow-400 w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-bold text-2xl mb-4">Competencies</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Problem Solving, Data Analytics, and Generative AI.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Education & Certifications -->
+    <section id="education">
+        <div class="max-w-7xl mx-auto w-full">
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 glass-card p-12 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                    <span class="text-cyan-400 font-mono uppercase tracking-widest text-sm">Background</span>
+                    <h2 class="text-5xl font-bold mt-4 mb-10">Education</h2>
+                    <div class="space-y-12">
+                        <div class="relative pl-8 border-l-2 border-cyan-400/30">
+                            <div class="absolute -left-[9px] top-0 w-4 h-4 bg-cyan-400 rounded-full"></div>
+                            <h4 class="text-2xl font-bold">Bachelor of Computer Applications (BCA)</h4>
+                            <p class="text-cyan-400 font-medium text-lg">PSIT College of Higher Education (PSIT Kanpur)</p>
+                            <p class="text-gray-500 text-sm mt-1">August 2024 — August 2027</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card p-12">
+                    <h3 class="text-2xl font-bold mb-8">Certifications</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="award" class="text-cyan-400 w-5 h-5 shrink-0"></i>
+                            <span class="text-gray-400 text-sm">Python (Basic)</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="award" class="text-cyan-400 w-5 h-5 shrink-0"></i>
+                            <span class="text-gray-400 text-sm">Data Analytics on AWS</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="award" class="text-cyan-400 w-5 h-5 shrink-0"></i>
+                            <span class="text-gray-400 text-sm">MS Azure Cloud Services</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="award" class="text-cyan-400 w-5 h-5 shrink-0"></i>
+                            <span class="text-gray-400 text-sm">Generative AI Intro</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="award" class="text-cyan-400 w-5 h-5 shrink-0"></i>
+                            <span class="text-gray-400 text-sm">IT & AWS Cloud Intro</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact">
+        <div class="max-w-7xl mx-auto w-full">
+            <div class="text-center mb-16">
+                <h2 class="text-6xl md:text-8xl font-bold mb-8">Let's <span class="text-gradient">Connect.</span></h2>
+                <p class="text-gray-400 text-xl max-w-2xl mx-auto">
+                    Currently based in Kanpur, Uttar Pradesh. Always open to discussing new technology and collaborations.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <a href="mailto:ankitkumar2431967@gmail.com" class="glass-card p-10 text-center hover:border-cyan-400 group">
+                    <i data-lucide="mail" class="w-10 h-10 mx-auto mb-6 text-gray-500 group-hover:text-cyan-400"></i>
+                    <h4 class="font-bold text-lg mb-2">Email</h4>
+                    <p class="text-gray-500 text-sm">ankitkumar2431967@gmail.com</p>
+                </a>
+                <a href="tel:+917390832438" class="glass-card p-10 text-center hover:border-cyan-400 group">
+                    <i data-lucide="phone" class="w-10 h-10 mx-auto mb-6 text-gray-500 group-hover:text-cyan-400"></i>
+                    <h4 class="font-bold text-lg mb-2">Phone</h4>
+                    <p class="text-gray-500 text-sm">+91 7390832438</p>
+                </a>
+                <a href="https://www.linkedin.com/in/ankitkumar-tech1" target="_blank" class="glass-card p-10 text-center hover:border-cyan-400 group">
+                    <i data-lucide="linkedin" class="w-10 h-10 mx-auto mb-6 text-gray-500 group-hover:text-cyan-400"></i>
+                    <h4 class="font-bold text-lg mb-2">LinkedIn</h4>
+                    <p class="text-gray-500 text-sm">ankitkumar-tech1</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="p-12 text-center border-t border-white/5">
+        <p class="text-gray-600 text-sm tracking-widest uppercase">Ankit Kumar — Creative Developer © 2024</p>
+    </footer>
+
+    <script>
+        // --- SECURITY ---
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.onkeydown = e => {
+            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) || (e.ctrlKey && e.keyCode == 85)) return false;
+        };
+
+        // --- CUSTOM CURSOR ---
+        const cursor = document.getElementById('custom-cursor');
+        const follower = document.getElementById('cursor-follower');
+        
+        document.addEventListener('mousemove', e => {
+            gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0 });
+            gsap.to(follower, { x: e.clientX - 14, y: e.clientY - 14, duration: 0.15 });
+        });
+
+        // --- THREE.JS: 3D BACKGROUND ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0x00f2ff, 2);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        const geometries = [
+            new THREE.IcosahedronGeometry(1, 0),
+            new THREE.TorusGeometry(0.7, 0.2, 16, 100),
+            new THREE.OctahedronGeometry(1, 0)
+        ];
+
+        const shapes = [];
+        for(let i = 0; i < 15; i++) {
+            const material = new THREE.MeshPhongMaterial({
+                color: i % 2 === 0 ? 0x7000ff : 0x00f2ff,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.15
+            });
+            const shape = new THREE.Mesh(geometries[Math.floor(Math.random() * geometries.length)], material);
+            shape.position.set((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 10);
+            shape.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+            shape.userData.speed = Math.random() * 0.005;
+            scene.add(shape);
+            shapes.push(shape);
+        }
+
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCnt = 1500;
+        const posArray = new Float32Array(particlesCnt * 3);
+        for(let i = 0; i < particlesCnt * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 30;
+        }
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({ size: 0.005, color: 0x00f2ff, transparent: true, opacity: 0.3 });
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+
+        camera.position.z = 8;
+
+        let mouseX = 0, mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth) - 0.5;
+            mouseY = (e.clientY / window.innerHeight) - 0.5;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            shapes.forEach(s => {
+                s.rotation.x += s.userData.speed;
+                s.rotation.y += s.userData.speed;
+            });
+            particlesMesh.rotation.y += 0.0005;
+            particlesMesh.rotation.x += mouseY * 0.02;
+            particlesMesh.rotation.z += mouseX * 0.02;
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        lucide.createIcons();
+        window.onload = () => {
+            animate();
+            gsap.registerPlugin(ScrollTrigger);
+            gsap.from("h1", { opacity: 0, y: 100, duration: 1.5, ease: "expo.out" });
+            gsap.utils.toArray('.glass-card').forEach(card => {
+                gsap.from(card, {
+                    scrollTrigger: { trigger: card, start: "top bottom-=50" },
+                    opacity: 0, y: 30, duration: 1
+                });
+            });
+        };
+    </script>
+</body>
+</html>
